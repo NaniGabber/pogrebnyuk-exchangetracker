@@ -9,7 +9,7 @@ dependencies = []
 dev = ["ruff", "pytest", "pre-commit"]
 
 [project.scripts]
-extrangetracker = "exchangetracker.cli:main"
+exchangetracker = "exchangetracker.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]
