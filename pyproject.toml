@@ -1,6 +1,6 @@
 [project]
 name = "exchangetracker"
-version = "0.0.1"
+version = "0.0.2"
 description = "Збір і аналіз курсу валют та металів"
 requires-python = ">=3.12"
 dependencies = [
