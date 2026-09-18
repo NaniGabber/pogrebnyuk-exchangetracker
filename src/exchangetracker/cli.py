@@ -1,6 +1,9 @@
-import requests
+from tabulate import tabulate
 import yfinance as yf
 from typing import Dict, List
+
+import requests
+
 
 
 def get_usd_uah() -> float:
@@ -36,10 +39,8 @@ def convert_usd_to_uah(prices: Dict[str, float], usd_uah: float) -> Dict[str, fl
 
 
 def show_privat_rates(rates: List[Dict[str, str]]) -> None:
-    print("Курси валют (ПриватБанк):")
-    for c in rates:
-        print(f"{c['ccy']} -> {c['base_ccy']}: Buy={c['buy']} Sell={c['sale']}")
-
+    table = [[c['ccy'], c['base_ccy'], c['buy'], c['sale']] for c in rates]
+    print(tabulate(table, headers=["Валюта", "База", "Купівля", "Продаж"]))
 
 def show_yahoo_rates(rates: Dict[str, float], usd_uah: float) -> None:
     print("\nКурси валют (Yahoo Finance → UAH):")
