@@ -4,11 +4,18 @@ from typing import Dict, List
 
 import requests
 
-
+def safe_request(url: str):
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        print(f"Помилка при запиті {url}: {e}")
+        return []
 
 def get_usd_uah() -> float:
     url = "https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5"
-    data = requests.get(url).json()
+    data = safe_request(url)
     usd = next((float(c["sale"]) for c in data if c["ccy"] == "USD"), None)
     if usd is None:
         raise ValueError("Не вдалося отримати курс USD/UAH")
@@ -17,7 +24,7 @@ def get_usd_uah() -> float:
 
 def get_currency_rates_privat() -> List[Dict[str, str]]:
     url = "https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5"
-    return requests.get(url).json()
+    return safe_request(url)
 
 
 def get_currency_rates_yahoo(base: str, targets: List[str]) -> Dict[str, float]:
