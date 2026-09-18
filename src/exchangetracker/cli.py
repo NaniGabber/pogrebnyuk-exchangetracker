@@ -1,6 +1,7 @@
 from tabulate import tabulate
 import yfinance as yf
 from typing import Dict, List
+from functools import lru_cache
 
 import requests
 
@@ -13,6 +14,7 @@ def safe_request(url: str):
         print(f"Помилка при запиті {url}: {e}")
         return []
 
+@lru_cache(maxsize=1)
 def get_usd_uah() -> float:
     url = "https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5"
     data = safe_request(url)
