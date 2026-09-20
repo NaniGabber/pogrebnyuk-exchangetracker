@@ -1,9 +1,8 @@
-from tabulate import tabulate
-import yfinance as yf
-from typing import Dict, List
 from functools import lru_cache
 
 import requests
+import yfinance as yf
+from tabulate import tabulate
 
 PRIVAT_API_URL = ("https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5")
 
@@ -12,7 +11,7 @@ def safe_request(url: str):
         response = requests.get(url, timeout=5)
         response.raise_for_status()
         return response.json()
-    except Exception as e:
+    except requests.RequestException as e:
         print(f"Помилка при запиті {url}: {e}")
         return []
 
@@ -26,16 +25,16 @@ def get_usd_uah() -> float:
     return usd
 
 
-def get_currency_rates_privat() -> List[Dict[str, str]]:
+def get_currency_rates_privat() -> list[dict[str, str]]:
     url = PRIVAT_API_URL
     return safe_request(url)
 
 
-def get_currency_rates_yahoo(base: str, targets: List[str]) -> Dict[str, float]:
+def get_currency_rates_yahoo(base: str, targets: list[str]) -> dict[str, float]:
     return {t: yf.Ticker(f"{t}{base}=X").history(period="1d")["Close"].iloc[-1] for t in targets}
 
 
-def get_metal_prices_usd() -> Dict[str, float]:
+def get_metal_prices_usd() -> dict[str, float]:
     metals = {
         "Gold (XAU)": "GC=F",
         "Silver (XAG)": "SI=F",
@@ -45,26 +44,27 @@ def get_metal_prices_usd() -> Dict[str, float]:
     return {name: yf.Ticker(ticker).history(period="1d")["Close"].iloc[-1] for name, ticker in metals.items()}
 
 
-def convert_usd_to_uah(prices: Dict[str, float], usd_uah: float) -> Dict[str, float]:
+def convert_usd_to_uah(prices: dict[str, float], usd_uah: float) -> dict[str, float]:
     return {name: price * usd_uah for name, price in prices.items()}
 
 
-def show_privat_rates(rates: List[Dict[str, str]]) -> None:
+def show_privat_rates(rates: list[dict[str, str]]) -> None:
     table = [[c['ccy'], c['base_ccy'], c['buy'], c['sale']] for c in rates]
     print(tabulate(table,
                     headers=["Валюта", "База", "Купівля", "Продаж"],
                     tablefmt="grid"))
 
-def show_yahoo_rates(rates: Dict[str, float], usd_uah: float) -> None:
+def show_yahoo_rates(rates: dict[str, float], usd_uah: float) -> None:
     print("\nКурси валют (Yahoo Finance → UAH):")
     for cur, val in rates.items():
         print(f"{cur}/USD: {val:.2f} → {val * usd_uah:.2f} UAH")
 
 
-def show_metals(prices_usd: Dict[str, float], prices_uah: Dict[str, float]) -> None:
+def show_metals(prices_usd: dict[str, float], prices_uah: dict[str, float]) -> None:
     print("\nКотирування металів:")
-    for name in prices_usd:
-        print(f"{name}: {prices_usd[name]:.2f} USD ≈ {prices_uah[name]:.2f} UAH")
+    for name, usd_price in prices_usd.items():
+        uah_price = prices_uah[name]
+        print(f"{name}: {usd_price:.2f} USD ≈ {uah_price:.2f} UAH")
 
 
 def main() -> None:
