@@ -5,6 +5,8 @@ from functools import lru_cache
 
 import requests
 
+PRIVAT_API_URL = ("https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5")
+
 def safe_request(url: str):
     try:
         response = requests.get(url, timeout=5)
@@ -16,7 +18,7 @@ def safe_request(url: str):
 
 @lru_cache(maxsize=1)
 def get_usd_uah() -> float:
-    url = "https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5"
+    url = PRIVAT_API_URL
     data = safe_request(url)
     usd = next((float(c["sale"]) for c in data if c["ccy"] == "USD"), None)
     if usd is None:
@@ -25,7 +27,7 @@ def get_usd_uah() -> float:
 
 
 def get_currency_rates_privat() -> List[Dict[str, str]]:
-    url = "https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5"
+    url = PRIVAT_API_URL
     return safe_request(url)
 
 
