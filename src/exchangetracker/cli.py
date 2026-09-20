@@ -51,7 +51,9 @@ def convert_usd_to_uah(prices: Dict[str, float], usd_uah: float) -> Dict[str, fl
 
 def show_privat_rates(rates: List[Dict[str, str]]) -> None:
     table = [[c['ccy'], c['base_ccy'], c['buy'], c['sale']] for c in rates]
-    print(tabulate(table, headers=["Валюта", "База", "Купівля", "Продаж"]))
+    print(tabulate(table,
+                    headers=["Валюта", "База", "Купівля", "Продаж"],
+                    tablefmt="grid"))
 
 def show_yahoo_rates(rates: Dict[str, float], usd_uah: float) -> None:
     print("\nКурси валют (Yahoo Finance → UAH):")
