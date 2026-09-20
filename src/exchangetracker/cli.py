@@ -79,15 +79,43 @@ def show_privat_rates(rates: list[dict[str, str]]) -> None:
 
 def show_yahoo_rates(rates: dict[str, float], usd_uah: float) -> None:
     print("\nКурси валют (Yahoo Finance → UAH):")
-    for cur, val in rates.items():
-        print(f"{cur}/USD: {val:.2f} → {val * usd_uah:.2f} UAH")
+
+    table = [
+        [cur, f"{val:.4f}", f"{val * usd_uah:.2f}"]
+        for cur, val in rates.items()
+    ]
+
+    print(
+        tabulate(
+            table,
+            headers=["Валюта", "До USD", "Еквівалент у UAH"],
+            tablefmt="grid",
+        )
+    )
 
 
-def show_metals(prices_usd: dict[str, float], prices_uah: dict[str, float]) -> None:
+def show_metals(
+    prices_usd: dict[str, float],
+    prices_uah: dict[str, float],
+) -> None:
     print("\nКотирування металів:")
-    for name, usd_price in prices_usd.items():
-        uah_price = prices_uah[name]
-        print(f"{name}: {usd_price:.2f} USD ≈ {uah_price:.2f} UAH")
+
+    table = [
+        [
+            name,
+            f"{usd_price:.2f}",
+            f"{prices_uah[name]:.2f}",
+        ]
+        for name, usd_price in prices_usd.items()
+    ]
+
+    print(
+        tabulate(
+            table,
+            headers=["Метал", "USD", "UAH"],
+            tablefmt="grid",
+        )
+    )
 
 
 def main() -> None:
