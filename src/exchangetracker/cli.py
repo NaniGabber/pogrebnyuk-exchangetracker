@@ -31,7 +31,18 @@ def get_currency_rates_privat() -> list[dict[str, str]]:
 
 
 def get_currency_rates_yahoo(base: str, targets: list[str]) -> dict[str, float]:
-    return {t: yf.Ticker(f"{t}{base}=X").history(period="1d")["Close"].iloc[-1] for t in targets}
+    rates = {}
+
+    for target in targets:
+        data = yf.Ticker(f"{target}{base}=X").history(period="5d")
+
+        if data.empty:
+            print(f"Немає даних для {target}")
+            continue
+
+        rates[target] = float(data["Close"].iloc[-1])
+
+    return rates
 
 
 def get_metal_prices_usd() -> dict[str, float]:
@@ -39,9 +50,21 @@ def get_metal_prices_usd() -> dict[str, float]:
         "Gold (XAU)": "GC=F",
         "Silver (XAG)": "SI=F",
         "Platinum (XPT)": "PL=F",
-        "Palladium (XPD)": "PA=F"
+        "Palladium (XPD)": "PA=F",
     }
-    return {name: yf.Ticker(ticker).history(period="1d")["Close"].iloc[-1] for name, ticker in metals.items()}
+
+    prices = {}
+
+    for name, ticker in metals.items():
+        data = yf.Ticker(ticker).history(period="5d")
+
+        if data.empty:
+            print(f"Немає даних для {name}")
+            continue
+
+        prices[name] = float(data["Close"].iloc[-1])
+
+    return prices
 
 
 def convert_usd_to_uah(prices: dict[str, float], usd_uah: float) -> dict[str, float]:
