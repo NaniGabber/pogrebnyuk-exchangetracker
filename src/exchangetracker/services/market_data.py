@@ -3,10 +3,7 @@ from functools import lru_cache
 import requests
 import yfinance as yf
 
-
-PRIVAT_API_URL = (
-    "https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5"
-)
+PRIVAT_API_URL = "https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5"
 
 
 def safe_request(url: str):
@@ -84,9 +81,4 @@ def convert_usd_to_uah(
     prices: dict[str, float],
     usd_uah: float,
 ) -> dict[str, float]:
-    return {
-        name: price * usd_uah
-        for name, price in prices.items()
-    }
-
-
+    return {name: price * usd_uah for name, price in prices.items()}

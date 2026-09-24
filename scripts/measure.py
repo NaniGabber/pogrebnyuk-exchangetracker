@@ -1,10 +1,10 @@
 from pathlib import Path
 from time import perf_counter
-from tracemalloc import start, stop, get_traced_memory
+from tracemalloc import get_traced_memory, start, stop
 
 from exchangetracker.sources.jsonl_file import (
-    read_jsonl_lazy,
     read_jsonl_eager,
+    read_jsonl_lazy,
 )
 
 path = Path("data/large.jsonl")
@@ -18,7 +18,7 @@ def benchmark_lazy():
         count += 1
 
     elapsed = perf_counter() - t0
-    current, peak = get_traced_memory()
+    _, peak = get_traced_memory()
     stop()
     return count, elapsed, peak / (1024 * 1024)
 
@@ -28,7 +28,7 @@ def benchmark_eager():
     t0 = perf_counter()
     rows = read_jsonl_eager(path)
     elapsed = perf_counter() - t0
-    current, peak = get_traced_memory()
+    _, peak = get_traced_memory()
     stop()
     return len(rows), elapsed, peak / (1024 * 1024)
 
