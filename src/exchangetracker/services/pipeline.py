@@ -15,3 +15,13 @@ def deduplicate(items: Iterable[ExchangeRate]) -> Iterator[ExchangeRate]:
 
 def count_by_asset(items: Iterable[ExchangeRate]) -> Counter[str]:
     return Counter(rate.asset for rate in items)
+
+
+def load_exchange_rates(path: Path) -> list[ExchangeRate]:
+    rows = read_rows(path)
+
+    parsed = (to_exchange_rate(row) for row in rows)
+
+    valid = (rate for rate in parsed if rate is not None)
+
+    return list(deduplicate(valid))
