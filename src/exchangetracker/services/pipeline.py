@@ -1,7 +1,10 @@
 from collections import Counter
 from collections.abc import Iterable, Iterator
+from pathlib import Path
 
 from ..domain.models import ExchangeRate
+from ..domain.parsing import to_exchange_rate
+from ..sources.json_file import read_rows
 
 
 def deduplicate(items: Iterable[ExchangeRate]) -> Iterator[ExchangeRate]:
