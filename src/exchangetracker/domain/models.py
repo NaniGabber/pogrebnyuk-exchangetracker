@@ -9,5 +9,5 @@ class ExchangeRate:
     date: str
 
     @property
-    def key(self) -> tuple[str, str]:
-        return self.asset, self.asset_type
+    def key(self) -> tuple[str, str, str]:
+        return self.asset, self.asset_type, self.date
