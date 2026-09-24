@@ -1,13 +1,13 @@
-from legacy.loader import process
+from domain.parsing import to_exchange_rate
 
-def test_legacy_output_is_stable():
-    rows = process("data/exchange_data.json")
+def test_non_numeric_rate_becomes_none():
+    row = {
+        "date": "2026-10-10",
+        "asset": "CHF",
+        "type": "currency",
+        "rate": "сорок два"
+    }
 
-    assert rows == [
-        ['usd', 'currency', 41.25, '2026-10-01'],
-        ['eur', 'currency', 48.1, '2026-10-02'],
-        ['xau', 'metal', 4550.0, '2026-10-03'],
-        ['xag', 'metal', 52.3, '2026-10-04'],
-        ['gbp', '', 53.2, '2026-10-06'],
-        ['chf', 'currency', 0, '2026-10-10']
-    ]
+    exchange_rate = to_exchange_rate(row)
+
+    assert exchange_rate.rate is None
