@@ -1,8 +1,8 @@
 import argparse
 from pathlib import Path
+from itertools import islice
 
 from tabulate import tabulate
-
 from .services.market_data import (
     convert_usd_to_uah,
     get_currency_rates_privat,
@@ -10,10 +10,7 @@ from .services.market_data import (
     get_metal_prices_usd,
     get_usd_uah,
 )
-from .services.pipeline import (
-    count_by_asset,
-    load_exchange_rates,
-)
+from .services.pipeline import count_by_asset, PipelineStats, load_exchange_rates
 
 
 def show_privat_rates(rates: list[dict]) -> None:
@@ -80,29 +77,51 @@ def show_metals(
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="exchangetracker")
-    parser.add_argument("path", type=Path, nargs="?", help="JSON файл з даними")
+    parser.add_argument("--path", type=Path, nargs="?", help="JSON файл з даними")
+    parser.add_argument(
+        "--preview", type=int, default=10, help="Показати перші n записів"
+    )
+    parser.add_argument("--common", nargs="?", help="Порахувати кількість за валютою")
+    parser.add_argument(
+        "--stats", nargs="?", help="Вивести результати опрацювання файлу"
+    )
+
+    def read_stats(stats: PipelineStats) -> None:
+        print("Read:", stats.read)
+        print("Invalid:", stats.invalid)
+        print("Duplicates:", stats.duplicates)
+        print("Kept:", stats.kept)
 
     args = parser.parse_args()
+    stats = PipelineStats()
 
     if args.path:
-        rates = load_exchange_rates(args.path)
+        rates = load_exchange_rates(args.path, stats)
 
-        print(f"Завантажено записів: {len(rates)}")
+        if args.preview:
+            for _ in islice(rates, args.preview):
+                continue
 
-        for asset, count in count_by_asset(rates).most_common():
-            print(f"{asset}: {count}")
+            read_stats(stats)
 
-    usd_uah = get_usd_uah()
-    privat_rates = get_currency_rates_privat()
-    yahoo_rates = get_currency_rates_yahoo("USD", ["EUR", "GBP", "JPY"])
+        if args.common:
+            for asset, count in count_by_asset(rates).most_common():
+                print(f"{asset}: {count}")
 
-    metals_usd = get_metal_prices_usd()
+        if args.stats:
+            read_stats(stats)
+    else:
+        usd_uah = get_usd_uah()
+        privat_rates = get_currency_rates_privat()
+        yahoo_rates = get_currency_rates_yahoo("USD", ["EUR", "GBP", "JPY"])
 
-    metals_uah = convert_usd_to_uah(metals_usd, usd_uah)
+        metals_usd = get_metal_prices_usd()
 
-    show_privat_rates(privat_rates)
-    show_yahoo_rates(yahoo_rates, usd_uah)
-    show_metals(metals_usd, metals_uah)
+        metals_uah = convert_usd_to_uah(metals_usd, usd_uah)
+
+        show_privat_rates(privat_rates)
+        show_yahoo_rates(yahoo_rates, usd_uah)
+        show_metals(metals_usd, metals_uah)
 
 
 if __name__ == "__main__":
