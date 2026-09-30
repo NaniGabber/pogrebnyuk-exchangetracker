@@ -29,6 +29,27 @@ class PipelineStats:
         return self.rate_sum / self.rate_count
 
 
+def collect(items: Iterable[ExchangeRate], stats: PipelineStats) -> None:
+    for rate in items:
+        stats.kept += 1
+
+        stats.by_asset[rate.asset] += 1
+
+        value = rate.rate
+
+        if value is None:
+            continue
+
+        stats.rate_count += 1
+        stats.rate_sum += value
+
+        if stats.rate_min is None or value < stats.rate_min:
+            stats.rate_min = value
+
+        if stats.rate_max is None or value > stats.rate_max:
+            stats.rate_max = value
+
+
 def deduplicate(
     items: Iterable[ExchangeRate], stats: PipelineStats
 ) -> Iterator[ExchangeRate]:
@@ -63,4 +84,5 @@ def load_exchange_rates(path: Path, stats: PipelineStats) -> list[ExchangeRate]:
 
     res = list(deduplicate(valid, stats))
     stats.kept = len(res)
+    collect(res, stats)
     return res
