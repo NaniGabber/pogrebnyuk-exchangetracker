@@ -1,30 +1,66 @@
 from collections import Counter
 from collections.abc import Iterable, Iterator
 from pathlib import Path
+from dataclasses import dataclass, field
 
 from ..domain.models import ExchangeRate
 from ..domain.parsing import to_exchange_rate
 from ..sources.json_file import read_rows
 
 
-def deduplicate(items: Iterable[ExchangeRate]) -> Iterator[ExchangeRate]:
+@dataclass(slots=True)
+class PipelineStats:
+    read: int = 0
+    invalid: int = 0
+    duplicates: int = 0
+    kept: int = 0
+    by_asset: Counter = field(default_factory=Counter)
+
+    rate_count: int = 0
+    rate_sum: float = 0.0
+    rate_min: float | None = None
+    rate_max: float | None = None
+
+    @property
+    def rate_avg(self) -> float | None:
+        if not self.rate_count:
+            return None
+
+        return self.rate_sum / self.rate_count
+
+
+def deduplicate(
+    items: Iterable[ExchangeRate], stats: PipelineStats
+) -> Iterator[ExchangeRate]:
     seen: set[tuple[str, str, str]] = set()
 
     for rate in items:
         if rate.key not in seen:
             seen.add(rate.key)
             yield rate
+        else:
+            stats.duplicates += 1
 
 
 def count_by_asset(items: Iterable[ExchangeRate]) -> Counter[str]:
     return Counter(rate.asset for rate in items)
 
 
-def load_exchange_rates(path: Path) -> list[ExchangeRate]:
+def load_exchange_rates(path: Path, stats: PipelineStats) -> list[ExchangeRate]:
     rows = read_rows(path)
-
+    stats.read += 1
     parsed = (to_exchange_rate(row) for row in rows)
 
-    valid = (rate for rate in parsed if rate is not None)
+    def valid_rates(items, stats):
+        for rate in items:
+            if rate is None:
+                stats.invalid += 1
+                continue
 
-    return list(deduplicate(valid))
+            yield rate
+
+    valid = valid_rates(parsed, stats)
+
+    res = list(deduplicate(valid, stats))
+    stats.kept = len(res)
+    return res
