@@ -7,6 +7,7 @@ from itertools import islice
 from ..domain.models import ExchangeRate
 from ..domain.parsing import to_exchange_rate
 from ..sources.json_file import read_rows
+from ..sources.jsonl_file import read_jsonl_lazy
 from typing import TypeVar
 
 T = TypeVar("T")
@@ -92,7 +93,10 @@ def load_exchange_rates(path: Path, stats: PipelineStats) -> list[ExchangeRate]:
 
             yield rate
 
-    rows = counted_rows(read_rows(path))
+    if path.suffix == ".jsonl":
+        rows = read_jsonl_lazy(path)
+    else:
+        rows = read_rows(path)
     parsed = (to_exchange_rate(row) for row in rows)
     valid = valid_rates(parsed)
     result = list(deduplicate(valid, stats))
