@@ -79,7 +79,7 @@ def count_by_asset(items: Iterable[ExchangeRate]) -> Counter[str]:
     return Counter(rate.asset for rate in items)
 
 
-def load_exchange_rates(path: Path, stats: PipelineStats) -> list[ExchangeRate]:
+def load_exchange_rates(path: Path, stats: PipelineStats) -> Iterator[ExchangeRate]:
     def counted_rows(rows):
         for row in rows:
             stats.read += 1
@@ -94,11 +94,11 @@ def load_exchange_rates(path: Path, stats: PipelineStats) -> list[ExchangeRate]:
             yield rate
 
     if path.suffix == ".jsonl":
-        rows = read_jsonl_lazy(path)
+        rows = counted_rows(read_jsonl_lazy(path))
     else:
-        rows = read_rows(path)
+        rows = counted_rows(read_rows(path))
+
     parsed = (to_exchange_rate(row) for row in rows)
     valid = valid_rates(parsed)
-    result = list(deduplicate(valid, stats))
-    collect(result, stats)
-    return result
+
+    yield from deduplicate(valid, stats)
