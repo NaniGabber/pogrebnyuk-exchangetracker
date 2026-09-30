@@ -1,88 +1,54 @@
-from functools import lru_cache
+import argparse
+from pathlib import Path
 
-import requests
-import yfinance as yf
 from tabulate import tabulate
 
-PRIVAT_API_URL = ("https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5")
-
-def safe_request(url: str):
-    try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
-        print(f"Помилка при запиті {url}: {e}")
-        return []
-
-@lru_cache(maxsize=1)
-def get_usd_uah() -> float:
-    url = PRIVAT_API_URL
-    data = safe_request(url)
-    usd = next((float(c["sale"]) for c in data if c["ccy"] == "USD"), None)
-    if usd is None:
-        raise ValueError("Не вдалося отримати курс USD/UAH")
-    return usd
+from .services.market_data import (
+    convert_usd_to_uah,
+    get_currency_rates_privat,
+    get_currency_rates_yahoo,
+    get_metal_prices_usd,
+    get_usd_uah,
+)
+from .services.pipeline import (
+    count_by_asset,
+    load_exchange_rates,
+)
 
 
-def get_currency_rates_privat() -> list[dict[str, str]]:
-    url = PRIVAT_API_URL
-    return safe_request(url)
+def show_privat_rates(rates: list[dict]) -> None:
+    table = [
+        [
+            row["ccy"],
+            row["base_ccy"],
+            row["buy"],
+            row["sale"],
+        ]
+        for row in rates
+    ]
+
+    print(
+        tabulate(
+            table,
+            headers=["Валюта", "База", "Купівля", "Продаж"],
+            tablefmt="grid",
+        )
+    )
 
 
-def get_currency_rates_yahoo(base: str, targets: list[str]) -> dict[str, float]:
-    rates = {}
-
-    for target in targets:
-        data = yf.Ticker(f"{target}{base}=X").history(period="5d")
-
-        if data.empty:
-            print(f"Немає даних для {target}")
-            continue
-
-        rates[target] = float(data["Close"].iloc[-1])
-
-    return rates
-
-
-def get_metal_prices_usd() -> dict[str, float]:
-    metals = {
-        "Gold (XAU)": "GC=F",
-        "Silver (XAG)": "SI=F",
-        "Platinum (XPT)": "PL=F",
-        "Palladium (XPD)": "PA=F",
-    }
-
-    prices = {}
-
-    for name, ticker in metals.items():
-        data = yf.Ticker(ticker).history(period="5d")
-
-        if data.empty:
-            print(f"Немає даних для {name}")
-            continue
-
-        prices[name] = float(data["Close"].iloc[-1])
-
-    return prices
-
-
-def convert_usd_to_uah(prices: dict[str, float], usd_uah: float) -> dict[str, float]:
-    return {name: price * usd_uah for name, price in prices.items()}
-
-
-def show_privat_rates(rates: list[dict[str, str]]) -> None:
-    table = [[c['ccy'], c['base_ccy'], c['buy'], c['sale']] for c in rates]
-    print(tabulate(table,
-                    headers=["Валюта", "База", "Купівля", "Продаж"],
-                    tablefmt="grid"))
-
-def show_yahoo_rates(rates: dict[str, float], usd_uah: float) -> None:
+def show_yahoo_rates(
+    rates: dict[str, float],
+    usd_uah: float,
+) -> None:
     print("\nКурси валют (Yahoo Finance → UAH):")
 
     table = [
-        [cur, f"{val:.4f}", f"{val * usd_uah:.2f}"]
-        for cur, val in rates.items()
+        [
+            currency,
+            f"{rate:.4f}",
+            f"{rate * usd_uah:.2f}",
+        ]
+        for currency, rate in rates.items()
     ]
 
     print(
@@ -102,27 +68,36 @@ def show_metals(
 
     table = [
         [
-            name,
+            metal,
             f"{usd_price:.2f}",
-            f"{prices_uah[name]:.2f}",
+            f"{prices_uah[metal]:.2f}",
         ]
-        for name, usd_price in prices_usd.items()
+        for metal, usd_price in prices_usd.items()
     ]
 
-    print(
-        tabulate(
-            table,
-            headers=["Метал", "USD", "UAH"],
-            tablefmt="grid",
-        )
-    )
+    print(tabulate(table, headers=["Метал", "USD", "UAH"], tablefmt="grid"))
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(prog="exchangetracker")
+    parser.add_argument("path", type=Path, nargs="?", help="JSON файл з даними")
+
+    args = parser.parse_args()
+
+    if args.path:
+        rates = load_exchange_rates(args.path)
+
+        print(f"Завантажено записів: {len(rates)}")
+
+        for asset, count in count_by_asset(rates).most_common():
+            print(f"{asset}: {count}")
+
     usd_uah = get_usd_uah()
     privat_rates = get_currency_rates_privat()
     yahoo_rates = get_currency_rates_yahoo("USD", ["EUR", "GBP", "JPY"])
+
     metals_usd = get_metal_prices_usd()
+
     metals_uah = convert_usd_to_uah(metals_usd, usd_uah)
 
     show_privat_rates(privat_rates)
@@ -132,4 +107,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
