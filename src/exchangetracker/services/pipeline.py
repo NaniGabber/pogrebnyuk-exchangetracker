@@ -2,10 +2,19 @@ from collections import Counter
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 from dataclasses import dataclass, field
+from itertools import islice
 
 from ..domain.models import ExchangeRate
 from ..domain.parsing import to_exchange_rate
 from ..sources.json_file import read_rows
+
+
+def batched(
+    items: Iterable[ExchangeRate], size: int
+) -> Iterator[tuple[ExchangeRate, ...]]:
+    iterator = iter(items)
+    while batch := tuple(islice(iterator, size)):
+        yield batch
 
 
 @dataclass(slots=True)
@@ -68,11 +77,12 @@ def count_by_asset(items: Iterable[ExchangeRate]) -> Counter[str]:
 
 
 def load_exchange_rates(path: Path, stats: PipelineStats) -> list[ExchangeRate]:
-    rows = read_rows(path)
-    stats.read += 1
-    parsed = (to_exchange_rate(row) for row in rows)
+    def counted_rows(rows):
+        for row in rows:
+            stats.read += 1
+            yield row
 
-    def valid_rates(items, stats):
+    def valid_rates(items):
         for rate in items:
             if rate is None:
                 stats.invalid += 1
@@ -80,9 +90,9 @@ def load_exchange_rates(path: Path, stats: PipelineStats) -> list[ExchangeRate]:
 
             yield rate
 
-    valid = valid_rates(parsed, stats)
-
-    res = list(deduplicate(valid, stats))
-    stats.kept = len(res)
-    collect(res, stats)
-    return res
+    rows = counted_rows(read_rows(path))
+    parsed = (to_exchange_rate(row) for row in rows)
+    valid = valid_rates(parsed)
+    result = list(deduplicate(valid, stats))
+    collect(result, stats)
+    return result
