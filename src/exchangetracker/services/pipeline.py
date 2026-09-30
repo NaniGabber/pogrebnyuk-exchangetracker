@@ -7,12 +7,14 @@ from itertools import islice
 from ..domain.models import ExchangeRate
 from ..domain.parsing import to_exchange_rate
 from ..sources.json_file import read_rows
+from typing import TypeVar
+
+T = TypeVar("T")
 
 
-def batched(
-    items: Iterable[ExchangeRate], size: int
-) -> Iterator[tuple[ExchangeRate, ...]]:
+def batched(items: Iterable[T], size: int) -> Iterator[tuple[T, ...]]:
     iterator = iter(items)
+
     while batch := tuple(islice(iterator, size)):
         yield batch
 

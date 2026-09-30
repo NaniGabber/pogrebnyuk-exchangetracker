@@ -7,6 +7,8 @@ from exchangetracker.sources.jsonl_file import (
     read_jsonl_lazy,
 )
 
+from exchangetracker.services.pipeline import batched
+
 path = Path("data/large.jsonl")
 
 
@@ -47,3 +49,7 @@ print("=== EAGER ===")
 print(f"Rows: {eager_rows}")
 print(f"Time: {eager_time:.3f} s")
 print(f"Peak memory: {eager_mem:.2f} MB")
+
+count = sum(1 for _ in batched(read_jsonl_lazy(path), 500))
+
+print(f"Пакетів по 500: {count}")
