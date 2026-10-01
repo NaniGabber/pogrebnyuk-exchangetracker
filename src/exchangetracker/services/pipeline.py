@@ -41,6 +41,19 @@ class PipelineStats:
         return self.rate_sum / self.rate_count
 
 
+def parse_all(rows, stats):
+    for row in rows:
+        stats.read += 1
+
+        rate = to_exchange_rate(row)
+
+        if rate is None:
+            stats.invalid += 1
+            continue
+
+        yield rate
+
+
 def collect(items: Iterable[ExchangeRate], stats: PipelineStats) -> None:
     for rate in items:
         stats.kept += 1
