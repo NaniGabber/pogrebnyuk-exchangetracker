@@ -84,7 +84,7 @@ def main() -> None:
     )
     parser.add_argument("--common", nargs="?", help="Порахувати кількість за валютою")
     parser.add_argument(
-        "--stats", nargs="?", help="Вивести результати опрацювання файлу"
+        "--stats", action="store_true", help="Вивести результати опрацювання файлу"
     )
 
     def read_stats(stats: PipelineStats) -> None:
@@ -108,10 +108,12 @@ def main() -> None:
         rates = load_exchange_rates(args.path, stats)
 
         if args.preview:
+            for rate in islice(rates, args.preview):
+                print(rate)
+
+        else:
             for _ in islice(rates, args.preview):
                 continue
-
-            read_stats(stats)
 
         if args.common:
             for asset, count in count_by_asset(rates).most_common():
