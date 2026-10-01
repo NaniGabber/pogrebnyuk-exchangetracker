@@ -1,6 +1,7 @@
 import time
 import tracemalloc
 from pathlib import Path
+from collections import deque
 
 from exchangetracker.domain.parsing import to_exchange_rate
 from exchangetracker.services.pipeline import (
@@ -17,27 +18,21 @@ def lazy():
     stats = PipelineStats()
     parsed = (to_exchange_rate(row) for row in read_jsonl_lazy(path))
     valid = (rate for rate in parsed if rate is not None)
-    collect(
-        deduplicate(valid, stats),
-        stats,
-    )
-
+    deduped = deduplicate(valid, stats)
+    deque(collect(deduped, stats), maxlen=0)  # повністю споживає ітератор
     return stats.kept
 
 
 def greedy():
+    stats = PipelineStats()
     rows = list(read_jsonl_lazy(path))
     parsed = [to_exchange_rate(row) for row in rows]
     valid = [rate for rate in parsed if rate is not None]
     seen = set()
     unique = []
-
-    for rate in valid:
-        if rate.key not in seen:
-            seen.add(rate.key)
-            unique.append(rate)
-
-    return len(unique)
+    deduped = deduplicate(valid, stats)
+    deque(collect(deduped, stats), maxlen=0)  # повністю споживає ітератор
+    return stats.kept
 
 
 for name, fn in (("генераторний конвеєр", lazy), ("проміжні списки", greedy)):
