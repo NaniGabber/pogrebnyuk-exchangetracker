@@ -82,14 +82,15 @@ def collect(
 def deduplicate(
     items: Iterable[ExchangeRate], stats: PipelineStats
 ) -> Iterator[ExchangeRate]:
-    seen: set[tuple[str, str, str]] = set()
+    seen: set[ExchangeRate] = set()
 
     for rate in items:
-        if rate.key not in seen:
-            seen.add(rate.key)
-            yield rate
-        else:
+        if rate in seen:
             stats.duplicates += 1
+            continue
+
+        seen.add(rate)
+        yield rate
 
 
 def count_by_asset(items: Iterable[ExchangeRate]) -> Counter[str]:
