@@ -93,6 +93,14 @@ def main() -> None:
         print("Duplicates:", stats.duplicates)
         print("Kept:", stats.kept)
 
+        print("Assets:", dict(stats.by_asset))
+
+        print("Rate count:", stats.rate_count)
+        print("Rate sum:", round(stats.rate_sum, 2))
+        print("Rate min:", stats.rate_min)
+        print("Rate max:", stats.rate_max)
+        print("Rate avg:", None if stats.rate_avg is None else round(stats.rate_avg, 2))
+
     args = parser.parse_args()
     stats = PipelineStats()
 
