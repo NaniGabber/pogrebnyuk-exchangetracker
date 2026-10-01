@@ -1,6 +1,5 @@
 import time
 import tracemalloc
-
 from pathlib import Path
 
 from exchangetracker.domain.parsing import to_exchange_rate

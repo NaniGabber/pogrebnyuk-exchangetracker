@@ -1,4 +1,3 @@
-from exchangetracker.domain.parsing import to_exchange_rate
 from exchangetracker.services.pipeline import PipelineStats, batched, parse_all
 
 

@@ -2,12 +2,11 @@ from pathlib import Path
 from time import perf_counter
 from tracemalloc import get_traced_memory, start, stop
 
+from exchangetracker.services.pipeline import batched
 from exchangetracker.sources.jsonl_file import (
     read_jsonl_eager,
     read_jsonl_lazy,
 )
-
-from exchangetracker.services.pipeline import batched
 
 path = Path("data/large.jsonl")
 

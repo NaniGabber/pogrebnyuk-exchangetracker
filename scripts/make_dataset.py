@@ -1,4 +1,6 @@
-import json, random, pathlib
+import json
+import pathlib
+import random
 
 random.seed(7)
 

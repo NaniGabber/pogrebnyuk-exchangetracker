@@ -1,8 +1,9 @@
 import argparse
-from pathlib import Path
 from itertools import islice
+from pathlib import Path
 
 from tabulate import tabulate
+
 from .services.market_data import (
     convert_usd_to_uah,
     get_currency_rates_privat,
@@ -10,7 +11,7 @@ from .services.market_data import (
     get_metal_prices_usd,
     get_usd_uah,
 )
-from .services.pipeline import count_by_asset, PipelineStats, load_exchange_rates
+from .services.pipeline import PipelineStats, count_by_asset, load_exchange_rates
 
 
 def show_privat_rates(rates: list[dict]) -> None:
