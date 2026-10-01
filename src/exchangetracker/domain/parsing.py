@@ -7,7 +7,7 @@ def normalize_asset(raw: str) -> str:
 
 def parse_rate(raw: object) -> float | None:
     try:
-        return float(raw)
+        return float(str(raw))
     except (TypeError, ValueError):
         return None
 

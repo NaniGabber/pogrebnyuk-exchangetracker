@@ -1,6 +1,6 @@
 [project]
 name = "exchangetracker"
-version = "0.0.2"
+version = "0.0.3"
 description = "Збір і аналіз курсу валют та металів"
 requires-python = ">=3.12"
 dependencies = [
@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff", "pytest", "pre-commit"]
+dev = ["ruff", "pytest", "pre-commit", "mypy", "types-requests","types-tabulate"]
 
 [project.scripts]
 exchangetracker = "exchangetracker.cli:main"
