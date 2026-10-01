@@ -54,7 +54,9 @@ def parse_all(rows, stats):
         yield rate
 
 
-def collect(items: Iterable[ExchangeRate], stats: PipelineStats) -> None:
+def collect(
+    items: Iterable[ExchangeRate], stats: PipelineStats
+) -> Iterator[ExchangeRate]:
     for rate in items:
         stats.kept += 1
 
@@ -73,6 +75,8 @@ def collect(items: Iterable[ExchangeRate], stats: PipelineStats) -> None:
 
         if stats.rate_max is None or value > stats.rate_max:
             stats.rate_max = value
+
+        yield rate
 
 
 def deduplicate(
@@ -113,5 +117,6 @@ def load_exchange_rates(path: Path, stats: PipelineStats) -> Iterator[ExchangeRa
 
     parsed = (to_exchange_rate(row) for row in rows)
     valid = valid_rates(parsed)
+    deduped = deduplicate(valid, stats)
 
-    yield from deduplicate(valid, stats)
+    yield from collect(deduped, stats)
