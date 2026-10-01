@@ -25,12 +25,21 @@ with path.open("w", encoding="utf-8") as f:
             asset = random.choice(assets)
 
             row = {
-                "asset": asset,
+                "asset": (asset if i % 11 else f"  {asset.lower()}  "),
                 "type": types[asset],
                 "rate": (
-                    str(round(random.uniform(10, 5000), 2)) if i % 7 else "невідомо"
+                    str(round(random.uniform(10, 5000), 2))
+                    if i % 7
+                    else random.choice(
+                        [
+                            "невідомо",
+                            "",
+                            "N/A",
+                            "курс відсутній",
+                        ]
+                    )
                 ),
-                "date": f"2026-10-{(i % 30) + 1:02d}",
+                "date": (f"2026-10-{(i % 30) + 1:02d}" if i % 13 else ""),
             }
 
         if i % 1000 == 0:
