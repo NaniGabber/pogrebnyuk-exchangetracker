@@ -3,7 +3,8 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from itertools import islice
 from pathlib import Path
-from typing import TypeVar
+from typing import Any, TypeVar
+
 from pydantic import ValidationError
 
 from ..domain.models import ExchangeRate
@@ -11,7 +12,6 @@ from ..domain.parsing import to_exchange_rate
 from ..sources.json_file import read_rows
 from ..sources.jsonl_file import read_jsonl_lazy
 from ..sources.schemas import ExchangeRateIn
-from typing import Any
 
 T = TypeVar("T")
 
