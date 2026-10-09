@@ -1,6 +1,6 @@
 import pytest
 
-from src.exchangetracker.domain.models import ExchangeRate
+from exchangetracker.domain.models import ExchangeRate
 
 
 @pytest.mark.parametrize(
