@@ -110,7 +110,7 @@ def main() -> None:
         preview_counter = 0
         for rate in islice(rates, None):
             preview_counter += 1
-            if preview_counter < args.preview:
+            if preview_counter <= args.preview:
                 print(rate)
             continue
 
