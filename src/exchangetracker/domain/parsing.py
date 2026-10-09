@@ -18,9 +18,12 @@ def to_exchange_rate(row: dict) -> ExchangeRate | None:
     if not asset.strip():
         return None
 
-    return ExchangeRate(
-        asset=normalize_asset(asset),
-        asset_type=row.get("type", ""),
-        rate=parse_rate(row.get("rate")),
-        date=row.get("date", ""),
-    )
+    try:
+        return ExchangeRate(
+            asset=normalize_asset(asset),
+            asset_type=row.get("type", ""),
+            rate=parse_rate(row.get("rate")),
+            date=row.get("date", ""),
+        )
+    except ValueError:
+        return None

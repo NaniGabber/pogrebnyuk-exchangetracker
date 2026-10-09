@@ -107,13 +107,12 @@ def main() -> None:
     if args.path:
         rates = load_exchange_rates(args.path, stats)
 
-        if args.preview:
-            for rate in islice(rates, args.preview):
+        preview_counter = 0
+        for rate in islice(rates, None):
+            preview_counter += 1
+            if preview_counter <= args.preview:
                 print(rate)
-
-        else:
-            for _ in islice(rates, args.preview):
-                continue
+            continue
 
         if args.common:
             for asset, count in count_by_asset(rates).most_common():
