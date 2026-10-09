@@ -27,3 +27,8 @@ target-version = "py312"
 python_version = "3.12"
 show_error_codes = true
 warn_unused_ignores = true
+strict=true
+
+[[tool.mypy.overrides]]
+module = ["some_untyped_lib.*"]
+ignore_missing_imports = true
