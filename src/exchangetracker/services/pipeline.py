@@ -4,11 +4,14 @@ from dataclasses import dataclass, field
 from itertools import islice
 from pathlib import Path
 from typing import TypeVar
+from pydantic import ValidationError
 
 from ..domain.models import ExchangeRate
 from ..domain.parsing import to_exchange_rate
 from ..sources.json_file import read_rows
 from ..sources.jsonl_file import read_jsonl_lazy
+from ..sources.schemas import ExchangeRateIn
+from typing import Any
 
 T = TypeVar("T")
 
@@ -41,13 +44,15 @@ class PipelineStats:
         return self.rate_sum / self.rate_count
 
 
-def parse_all(rows, stats):
+def parse_all(
+    rows: Iterable[dict[str, Any]], stats: PipelineStats
+) -> Iterator[ExchangeRate]:
     for row in rows:
         stats.read += 1
 
-        rate = to_exchange_rate(row)
-
-        if rate is None:
+        try:
+            rate = ExchangeRateIn.model_validate(row).to_domain()
+        except ValidationError:
             stats.invalid += 1
             continue
 
