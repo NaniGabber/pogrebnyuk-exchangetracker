@@ -43,3 +43,7 @@ jobs:
           PYTHONPATH: src
         run: |
           pytest -v
+
+      - name: Architecture contracts
+        run: |
+          lint-imports
