@@ -3,13 +3,14 @@ import tracemalloc
 from collections import deque
 from pathlib import Path
 
+from exchangetracker.sources.jsonl_file import read_jsonl_lazy
+
 from exchangetracker.domain.parsing import to_exchange_rate
 from exchangetracker.services.pipeline import (
     PipelineStats,
     collect,
     deduplicate,
 )
-from exchangetracker.sources.jsonl_file import read_jsonl_lazy
 
 path = Path("data/large.jsonl")
 
@@ -40,4 +41,4 @@ for name, fn in (("генераторний конвеєр", lazy), ("промі
     elapsed = time.perf_counter() - t0
     peak = tracemalloc.get_traced_memory()[1] / 1024 / 1024
     tracemalloc.stop()
-    print(f"{name:22} " f"{n} записів " f"{elapsed:.2f} с " f"пік {peak:.1f} МБ")
+    print(f"{name:22} {n} записів {elapsed:.2f} с пік {peak:.1f} МБ")
