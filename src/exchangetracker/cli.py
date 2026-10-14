@@ -95,7 +95,7 @@ def show_metals(
 
 def main() -> None:
     parser = argparse.ArgumentParser(prog="exchangetracker")
-    parser.add_argument("--path", type=Path, nargs="?", help="JSON файл з даними")
+    parser.add_argument("paths", type=Path, nargs="+", help="файли з даними")
     parser.add_argument("--preview", type=int, default=10, help="Показати перші n записів")
     parser.add_argument("--common", nargs="?", help="Порахувати кількість за валютою")
     parser.add_argument("--stats", action="store_true", help="Вивести результати опрацювання файлу")
@@ -116,8 +116,8 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.path:
-        sources = [build_source(args.path)]
+    if args.paths:
+        sources = [build_source(path) for path in args.paths]
         stats = Pipeline(sources).run()
 
         if args.common:
