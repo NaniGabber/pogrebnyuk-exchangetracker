@@ -1,4 +1,5 @@
 import argparse
+from collections.abc import Callable
 from pathlib import Path
 
 from tabulate import tabulate
@@ -11,7 +12,21 @@ from .services.market_data import (
     get_usd_uah,
 )
 from .services.pipeline import Pipeline, PipelineStats
+from .services.ports import Source
 from .sources.jsonl import JsonlSource
+
+FACTORIES: dict[str, Callable[[Path], Source]] = {
+    ".jsonl": JsonlSource,
+}
+
+
+def build_source(path: Path) -> Source:
+    try:
+        factory = FACTORIES[path.suffix]
+    except KeyError:
+        raise SystemExit(f"Unsupported file type: {path.suffix}") from None
+
+    return factory(path)
 
 
 def show_privat_rates(rates: list[dict]) -> None:
@@ -100,10 +115,8 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.path:
-        source = JsonlSource(args.path)
-
-        pipeline = Pipeline([source])
-        stats = pipeline.run()
+        sources = [build_source(args.path)]
+        stats = Pipeline(sources).run()
 
         if args.common:
             for asset, count in stats.by_asset.most_common():
