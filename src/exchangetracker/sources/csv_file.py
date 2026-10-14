@@ -7,7 +7,7 @@ from typing import Any
 class CsvSource:
     name = "csv"
 
-    def __init__(self, path: Path, delimiter: str = ";") -> None:
+    def __init__(self, path: Path, delimiter: str = ",") -> None:
         self._path = path
         self._delimiter = delimiter
 
