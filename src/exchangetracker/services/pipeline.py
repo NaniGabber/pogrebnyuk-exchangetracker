@@ -2,16 +2,13 @@ from collections import Counter
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from itertools import islice
-from pathlib import Path
-from typing import Any, TypeVar
+from typing import TypeVar
 
 from pydantic import ValidationError
 
 from ..domain.models import ExchangeRate
-from ..domain.parsing import to_exchange_rate
-from ..sources.json_file import read_rows
-from ..sources.jsonl_file import read_jsonl_lazy
-from ..sources.schemas import ExchangeRateIn
+from .ports import Source
+from .schemas import ExchangeRateIn
 
 T = TypeVar("T")
 
@@ -29,7 +26,9 @@ class PipelineStats:
     invalid: int = 0
     duplicates: int = 0
     kept: int = 0
-    by_asset: Counter = field(default_factory=Counter)
+
+    by_asset: Counter[str] = field(default_factory=Counter)
+    by_source: Counter[str] = field(default_factory=Counter)
 
     rate_count: int = 0
     rate_sum: float = 0.0
@@ -44,85 +43,51 @@ class PipelineStats:
         return self.rate_sum / self.rate_count
 
 
-def parse_all(
-    rows: Iterable[dict[str, Any]], stats: PipelineStats
-) -> Iterator[ExchangeRate]:
-    for row in rows:
-        stats.read += 1
+class Pipeline:
+    def __init__(self, sources: list[Source]) -> None:
+        self._sources = sources
 
-        try:
-            rate = ExchangeRateIn.model_validate(row).to_domain()
-        except ValidationError:
-            stats.invalid += 1
-            continue
+    def run(self) -> PipelineStats:
+        stats = PipelineStats()
+        seen: set[ExchangeRate] = set()
 
-        yield rate
+        for source in self._sources:
+            for rate in self._parse(source, stats):
+                if rate in seen:
+                    stats.duplicates += 1
+                    continue
 
+                seen.add(rate)
 
-def collect(
-    items: Iterable[ExchangeRate], stats: PipelineStats
-) -> Iterator[ExchangeRate]:
-    for rate in items:
-        stats.kept += 1
+                stats.kept += 1
+                stats.by_source[source.name] += 1
+                stats.by_asset[rate.asset] += 1
 
-        stats.by_asset[rate.asset] += 1
+                value = rate.rate
 
-        value = rate.rate
+                if value is None:
+                    continue
 
-        if value is None:
-            continue
+                stats.rate_count += 1
+                stats.rate_sum += value
 
-        stats.rate_count += 1
-        stats.rate_sum += value
+                if stats.rate_min is None or value < stats.rate_min:
+                    stats.rate_min = value
 
-        if stats.rate_min is None or value < stats.rate_min:
-            stats.rate_min = value
+                if stats.rate_max is None or value > stats.rate_max:
+                    stats.rate_max = value
 
-        if stats.rate_max is None or value > stats.rate_max:
-            stats.rate_max = value
+        return stats
 
-        yield rate
-
-
-def deduplicate(
-    items: Iterable[ExchangeRate], stats: PipelineStats
-) -> Iterator[ExchangeRate]:
-    seen: set[ExchangeRate] = set()
-
-    for rate in items:
-        if rate in seen:
-            stats.duplicates += 1
-            continue
-
-        seen.add(rate)
-        yield rate
-
-
-def count_by_asset(items: Iterable[ExchangeRate]) -> Counter[str]:
-    return Counter(rate.asset for rate in items)
-
-
-def load_exchange_rates(path: Path, stats: PipelineStats) -> Iterator[ExchangeRate]:
-    def counted_rows(rows):
-        for row in rows:
+    @staticmethod
+    def _parse(
+        source: Source,
+        stats: PipelineStats,
+    ) -> Iterator[ExchangeRate]:
+        for row in source.read():
             stats.read += 1
-            yield row
 
-    def valid_rates(items):
-        for rate in items:
-            if rate is None:
+            try:
+                yield ExchangeRateIn.model_validate(row).to_domain()
+            except ValidationError:
                 stats.invalid += 1
-                continue
-
-            yield rate
-
-    if path.suffix == ".jsonl":
-        rows = counted_rows(read_jsonl_lazy(path))
-    else:
-        rows = counted_rows(read_rows(path))
-
-    parsed = (to_exchange_rate(row) for row in rows)
-    valid = valid_rates(parsed)
-    deduped = deduplicate(valid, stats)
-
-    yield from collect(deduped, stats)
