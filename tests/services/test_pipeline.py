@@ -55,3 +55,54 @@ def test_asset_counter() -> None:
 
     assert stats.by_asset["UAH"] == 1
     assert stats.by_asset["USD"] == 1
+
+
+def test_rate_statistics() -> None:
+    row2 = {
+        "asset": "USD",
+        "type": "currency",
+        "rate": 40.0,
+        "date": "2026-02-15",
+    }
+
+    stats = Pipeline([FakeSource([ROW, row2])]).run()
+
+    assert stats.rate_count == 2
+    assert stats.rate_sum == 85.5
+    assert stats.rate_min == 40.0
+    assert stats.rate_max == 45.5
+
+
+def test_by_source_counter() -> None:
+    stats = Pipeline(
+        [
+            FakeSource([ROW], name="api"),
+            FakeSource(
+                [
+                    {
+                        "asset": "USD",
+                        "type": "currency",
+                        "rate": 40.0,
+                        "date": "2026-02-15",
+                    }
+                ],
+                name="csv",
+            ),
+        ]
+    ).run()
+
+    assert stats.by_source["api"] == 1
+    assert stats.by_source["csv"] == 1
+
+
+def test_average_rate() -> None:
+    row2 = {
+        "asset": "USD",
+        "type": "currency",
+        "rate": 40.0,
+        "date": "2026-02-15",
+    }
+
+    stats = Pipeline([FakeSource([ROW, row2])]).run()
+
+    assert stats.rate_avg == 42.75
