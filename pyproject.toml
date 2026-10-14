@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff", "pytest", "pre-commit", "mypy", "types-requests","types-tabulate"]
+dev = ["ruff", "pytest", "pre-commit", "mypy", "types-requests", "types-tabulate", "pydantic", "pydantic-settings"]
 
 [project.scripts]
 exchangetracker = "exchangetracker.cli:main"
@@ -22,3 +22,13 @@ build-backend = "setuptools.build_meta"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.mypy]
+python_version = "3.12"
+show_error_codes = true
+warn_unused_ignores = true
+strict=true
+
+[[tool.mypy.overrides]]
+module = ["some_untyped_lib.*"]
+ignore_missing_imports = true
