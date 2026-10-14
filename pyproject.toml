@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff", "pytest", "pre-commit", "mypy", "types-requests", "types-tabulate", "pydantic", "pydantic-settings", import-linter]
+dev = ["ruff", "pytest", "pre-commit", "mypy", "types-requests", "types-tabulate", "pydantic", "pydantic-settings", "import-linter"]
 
 [project.scripts]
 exchangetracker = "exchangetracker.cli:main"
