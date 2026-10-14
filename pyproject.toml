@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff", "pytest", "pre-commit", "mypy", "types-requests", "types-tabulate", "pydantic", "pydantic-settings"]
+dev = ["ruff", "pytest", "pre-commit", "mypy", "types-requests", "types-tabulate", "pydantic", "pydantic-settings", "import-linter"]
 
 [project.scripts]
 exchangetracker = "exchangetracker.cli:main"
@@ -32,3 +32,17 @@ strict=true
 [[tool.mypy.overrides]]
 module = ["some_untyped_lib.*"]
 ignore_missing_imports = true
+
+
+[tool.importlinter]
+root_package = "exchangetracker"
+[[tool.importlinter.contracts]]
+name = "Domain is independent"
+type = "forbidden"
+source_modules = ["exchangetracker.domain"]
+forbidden_modules = ["exchangetracker.services", "exchangetracker.sources", "exchangetracker.cli"]
+[[tool.importlinter.contracts]]
+name = "Services do not know adapters"
+type = "forbidden"
+source_modules = ["exchangetracker.services"]
+forbidden_modules = ["exchangetracker.sources", "exchangetracker.cli"]
