@@ -1,10 +1,10 @@
-class JobRadarError(Exception):
+class ExchangeTrackerError(Exception):
     """Базовий виняток застосунку."""
 
     pass
 
 
-class SourceError(JobRadarError):
+class SourceError(ExchangeTrackerError):
     """Проблема з джерелом даних: файл, мережа, формат."""
 
     pass
@@ -16,7 +16,7 @@ class ParseError(SourceError):
     pass
 
 
-class ConfigError(JobRadarError):
+class ConfigError(ExchangeTrackerError):
     """Некоректна конфігурація застосунку."""
 
     pass
