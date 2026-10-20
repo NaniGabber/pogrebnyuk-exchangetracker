@@ -1,4 +1,14 @@
-from exchangetracker.services.pipeline import PipelineStats, batched, parse_all
+from exchangetracker.services.pipeline import Pipeline, PipelineStats, batched
+
+
+class DummySource:
+    name = "test"
+
+    def __init__(self, rows):
+        self._rows = rows
+
+    def read(self):
+        yield from self._rows
 
 
 def test_invalid_rows_are_counted():
@@ -18,8 +28,9 @@ def test_invalid_rows_are_counted():
     ]
 
     stats = PipelineStats()
+    source = DummySource(rows)
 
-    result = list(parse_all(rows, stats))
+    result = list(Pipeline._parse(source, stats))
 
     assert len(result) == 1
     assert stats.read == 2
