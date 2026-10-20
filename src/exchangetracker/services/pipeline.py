@@ -1,9 +1,9 @@
+import logging
 from collections import Counter
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from itertools import islice
 from typing import TypeVar
-import logging
 
 from pydantic import ValidationError
 

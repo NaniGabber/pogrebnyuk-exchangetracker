@@ -1,9 +1,9 @@
 import json
 import logging
-
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
+
 from ..errors import SourceError
 
 logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ class JsonlSource:
     def read(self) -> Iterator[dict[str, Any]]:
         try:
             handle = self._path.open(encoding="utf-8")
-        except IOError as exc:
+        except OSError as exc:
             raise SourceError(f"cannot open {self._path}") from exc
 
         with handle as f:

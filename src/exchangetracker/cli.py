@@ -1,9 +1,13 @@
 import argparse
+import logging
 from collections.abc import Callable
 from pathlib import Path
 
 from tabulate import tabulate
 
+from .config import Settings
+from .errors import ExchangeTrackerError, SourceError
+from .logging_setup import setup
 from .services.market_data import (
     convert_usd_to_uah,
     get_currency_rates_privat,
@@ -21,13 +25,14 @@ FACTORIES: dict[str, Callable[[Path], Source]] = {
     ".csv": CsvSource,
 }
 
+logger = logging.getLogger(__name__)
+
 
 def build_source(path: Path) -> Source:
     try:
         factory = FACTORIES[path.suffix]
     except KeyError:
-        raise SystemExit(f"Unsupported file type: {path.suffix}") from None
-
+        raise SourceError(f"unsupported file type: {path.suffix}") from None
     return factory(path)
 
 
@@ -94,11 +99,18 @@ def show_metals(
 
 
 def main() -> None:
+    settings = Settings()
+
     parser = argparse.ArgumentParser(prog="exchangetracker")
     parser.add_argument("paths", type=Path, nargs="+", help="файли з даними")
     parser.add_argument("--preview", type=int, default=10, help="Показати перші n записів")
     parser.add_argument("--common", nargs="?", help="Порахувати кількість за валютою")
     parser.add_argument("--stats", action="store_true", help="Вивести результати опрацювання файлу")
+    parser.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="перекриває значення з .env і змінних середовища",
+    )
 
     def read_stats(stats: PipelineStats) -> None:
         print("Read:", stats.read)
@@ -116,9 +128,15 @@ def main() -> None:
 
     args = parser.parse_args()
 
+    setup(args.log_level or settings.log_level)
+
     if args.paths:
-        sources = [build_source(path) for path in args.paths]
-        stats = Pipeline(sources).run()
+        try:
+            sources = [build_source(path) for path in args.paths]
+            stats = Pipeline(sources).run()
+        except ExchangeTrackerError as exc:
+            logger.error("%s", exc)
+            raise SystemExit(1) from exc
 
         if args.common:
             for asset, count in stats.by_asset.most_common():
