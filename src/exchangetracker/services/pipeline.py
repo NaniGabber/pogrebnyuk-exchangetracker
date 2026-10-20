@@ -3,12 +3,15 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from itertools import islice
 from typing import TypeVar
+import logging
 
 from pydantic import ValidationError
 
 from ..domain.models import ExchangeRate
 from .ports import Source
 from .schemas import ExchangeRateIn
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -49,6 +52,7 @@ class Pipeline:
 
     def run(self) -> PipelineStats:
         stats = PipelineStats()
+        logger.info("start processing %d source(s)", len(self._sources))
         seen: set[ExchangeRate] = set()
 
         for source in self._sources:
@@ -76,7 +80,14 @@ class Pipeline:
 
                 if stats.rate_max is None or value > stats.rate_max:
                     stats.rate_max = value
-
+        logger.info(
+            "done: kept %d, invalid %d, duplicates %d",
+            stats.kept,
+            stats.invalid,
+            stats.duplicates,
+        )
+        if stats.invalid:
+            logger.warning("skipped %d invalid rows", stats.invalid)
         return stats
 
     @staticmethod
@@ -89,5 +100,6 @@ class Pipeline:
 
             try:
                 yield ExchangeRateIn.model_validate(row).to_domain()
-            except ValidationError:
+            except ValidationError as exc:
                 stats.invalid += 1
+                logger.debug("skip row: %d validation errors", exc.error_count())
