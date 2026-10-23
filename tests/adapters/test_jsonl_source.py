@@ -21,7 +21,7 @@ def test_malformed_line_is_skipped_and_logged(
 
     caplog.set_level(
         logging.DEBUG,
-        logger="exchangetracker.adapters.jsonl",
+        logger="exchangetracker.sources.jsonl",
     )
 
     rows = list(JsonlSource(path).read())
