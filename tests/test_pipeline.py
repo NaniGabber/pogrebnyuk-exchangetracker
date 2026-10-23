@@ -1,6 +1,5 @@
-from tests.conftest import FakeSource
-
 from exchangetracker.services.pipeline import Pipeline, PipelineStats, batched
+from tests.conftest import FakeSource
 
 
 def test_invalid_rows_are_counted():
