@@ -58,3 +58,17 @@ def test_invalid_exchange_rate_is_rejected(
 ) -> None:
     with pytest.raises(ValueError):
         make(**overrides)
+
+
+@pytest.mark.parametrize(
+    ("rate", "expected"),
+    [
+        (None, False),
+        (10.0, False),
+        (49.99, False),
+        (50.0, True),
+        (100.0, True),
+    ],
+)
+def test_is_high_rate(rate: float | None, expected: bool) -> None:
+    assert make(rate=rate).is_high_rate is expected
