@@ -2,6 +2,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from ..domain.models import ExchangeRate
 
+HIGH_RATE_THRESHOLD = 50.0
+
 
 class ExchangeRateIn(BaseModel):
     model_config = ConfigDict(
@@ -41,3 +43,7 @@ class ExchangeRateIn(BaseModel):
             rate=self.rate,
             date=self.date,
         )
+
+    @property
+    def is_high_rate(self) -> bool:
+        return self.rate is not None and self.rate >= HIGH_RATE_THRESHOLD
