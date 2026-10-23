@@ -47,3 +47,7 @@ name = "Services do not know adapters"
 type = "forbidden"
 source_modules = ["exchangetracker.services"]
 forbidden_modules = ["exchangetracker.sources", "exchangetracker.cli"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
