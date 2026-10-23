@@ -139,3 +139,30 @@ assert exc.value.code == 1
 У ході роботи було реалізовано багаторівневу систему тестування, що охоплює доменну логіку, моделі межі, конвеєр обробки даних, адаптери та інтерфейс командного рядка. Автоматизовані тести дозволили своєчасно виявляти помилки, безпечно виконувати рефакторинг та забезпечити стабільність роботи застосунку.
 
 Використання TDD разом із контролем покриття тестами суттєво підвищило якість програмного продукту та спростило подальший супровід коду.
+
+## 9. Результат покриття:
+```bash
+_____________ coverage: platform linux, python 3.13.5-final-0 ______________
+
+Name                                          Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------------
+src/exchangetracker/__init__.py                   0      0   100%
+src/exchangetracker/cli.py                       75     32    57%   34-35, 40-50, 63-74, 87-98, 116-127, 142-143, 146-158, 162
+src/exchangetracker/config.py                    12      0   100%
+src/exchangetracker/domain/__init__.py            0      0   100%
+src/exchangetracker/domain/models.py             30      6    80%   25, 28,31, 34, 38, 42
+src/exchangetracker/domain/parsing.py            16      3    81%   19, 28-29
+src/exchangetracker/domain/text.py                2      0   100%
+src/exchangetracker/errors.py                     4      0   100%
+src/exchangetracker/logging_setup.py              4      0   100%
+src/exchangetracker/services/__init__.py          0      0   100%
+src/exchangetracker/services/market_data.py      43     32    26%   10-16, 21-31, 35, 42-55, 59-77, 84
+src/exchangetracker/services/pipeline.py         71      1    99%   44
+src/exchangetracker/services/ports.py             4      0   100%
+src/exchangetracker/services/schemas.py          31      0   100%
+src/exchangetracker/sources/csv_file.py          12      4    67%   11-12, 15-16
+src/exchangetracker/sources/jsonl.py             36     11    69%   27, 35-42, 46-47
+---------------------------------------------------------------------------
+TOTAL                                           340     89    74%
+FAIL Required test coverage of 90% not reached. Total coverage: 73.82%
+```
