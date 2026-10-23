@@ -1,6 +1,8 @@
-from exchangetracker.cli import main
-import pytest
 from pathlib import Path
+
+import pytest
+
+from exchangetracker.cli import main
 
 
 def test_flag_beats_environment(jsonl_file: Path, monkeypatch: pytest.MonkeyPatch) -> None:
