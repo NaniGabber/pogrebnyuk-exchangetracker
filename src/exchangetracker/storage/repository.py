@@ -61,8 +61,6 @@ class SqlExchangeRateRepository:
         result = self._session.execute(stmt)
         inserted = len(result.scalars().all())
 
-        self._session.commit()
-
         return inserted
 
     def by_asset(

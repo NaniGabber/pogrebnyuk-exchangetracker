@@ -28,6 +28,7 @@ from .services.pipeline import Pipeline, PipelineStats
 from .services.ports import Source
 from .sources.csv_file import CsvSource
 from .sources.jsonl import JsonlSource
+from contextlib import contextmanager
 
 FACTORIES: dict[str, Callable[[Path], Source]] = {
     ".jsonl": JsonlSource,
@@ -35,6 +36,20 @@ FACTORIES: dict[str, Callable[[Path], Source]] = {
 }
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def session_scope(factory):
+    session = factory()
+
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def run_with_storage(
@@ -47,10 +62,12 @@ def run_with_storage(
 
     factory = make_session_factory(engine)
 
-    with factory() as session:
+    with session_scope(factory) as session:
         repo = SqlExchangeRateRepository(session)
 
         stats = Pipeline(sources).run_into(repo)
+
+        session.commit()
 
         logger.info(
             "written to database: %d",
