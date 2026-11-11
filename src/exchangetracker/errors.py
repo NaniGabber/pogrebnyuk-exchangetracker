@@ -12,3 +12,7 @@ class ParseError(SourceError):
 
 class ConfigError(ExchangeTrackerError):
     """Некоректна конфігурація застосунку."""
+
+
+class StorageError(ExchangeTrackerError):
+    """Проблема зі сховищем: підключення, схема, транзакція."""
