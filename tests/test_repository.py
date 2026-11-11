@@ -15,7 +15,8 @@ from exchangetracker.storage.repository import (
 )
 
 TEST_DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/exchangetracker"
+    "DATABASE_URL",
+    "postgresql+psycopg://postgres:postgres@localhost:5432/exchangetracker",
 )
 
 
