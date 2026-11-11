@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     batch_size: int = 500
     api_token: str = ""
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/exchangetracker"
 
 
 def mask(secret: str) -> str:
