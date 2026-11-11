@@ -1,11 +1,11 @@
 from collections.abc import Iterable
 
-from sqlalchemy import func, select
+from sqlalchemy import desc, func, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session
 
 from ..domain.models import ExchangeRate
-from .mappers import _to_row
+from .mappers import _to_domain, _to_row
 from .models import ExchangeRateORM
 
 
@@ -54,3 +54,35 @@ class SqlExchangeRateRepository:
         self._session.commit()
 
         return len(batch)
+
+    def by_asset(self, asset: str) -> list[ExchangeRate]:
+        rows = self._session.scalars(
+            select(ExchangeRateORM)
+            .where(ExchangeRateORM.asset == asset)
+            .order_by(ExchangeRateORM.date)
+        ).all()
+
+        return [_to_domain(row) for row in rows]
+
+    def top_assets(
+        self,
+        limit: int = 10,
+    ) -> list[tuple[str, int]]:
+        rows = self._session.execute(
+            select(
+                ExchangeRateORM.asset,
+                func.count().label("total"),
+            )
+            .group_by(ExchangeRateORM.asset)
+            .order_by(desc("total"))
+            .limit(limit)
+        ).all()
+
+        return [(asset, total) for asset, total in rows]
+
+    def average_rate(self) -> float:
+        value = self._session.scalar(
+            select(func.avg(ExchangeRateORM.rate)).where(ExchangeRateORM.rate.is_not(None))
+        )
+
+        return float(value or 0.0)
