@@ -1,6 +1,7 @@
 import argparse
 import logging
 from collections.abc import Callable
+from contextlib import contextmanager
 from pathlib import Path
 
 from tabulate import tabulate
@@ -28,7 +29,6 @@ from .services.pipeline import Pipeline, PipelineStats
 from .services.ports import Source
 from .sources.csv_file import CsvSource
 from .sources.jsonl import JsonlSource
-from contextlib import contextmanager
 
 FACTORIES: dict[str, Callable[[Path], Source]] = {
     ".jsonl": JsonlSource,
