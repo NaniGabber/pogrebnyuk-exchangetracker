@@ -29,6 +29,7 @@ class PipelineStats:
     invalid: int = 0
     duplicates: int = 0
     kept: int = 0
+    inserted: int = 0
 
     by_asset: Counter[str] = field(default_factory=Counter)
     by_source: Counter[str] = field(default_factory=Counter)
@@ -84,8 +85,7 @@ class Pipeline:
 
                     yield rate
 
-        repository.add_many(stream())
-
+        stats.inserted = repository.add_many(stream())
         return stats
 
     def run(self) -> PipelineStats:
