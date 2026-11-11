@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-from sqlalchemy import desc, func, select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session
 
@@ -18,7 +18,10 @@ class SqlExchangeRateRepository:
         self._session = session
         self._batch_size = batch_size
 
-    def add_many(self, rates: Iterable[ExchangeRate]) -> int:
+    def add_many(
+        self,
+        rates: Iterable[ExchangeRate],
+    ) -> int:
         written = 0
         batch: list[dict[str, object]] = []
 
@@ -35,27 +38,30 @@ class SqlExchangeRateRepository:
         return written
 
     def count(self) -> int:
-        return self._session.scalar(select(func.count()).select_from(ExchangeRateORM)) or 0
-
-    def _flush(self, batch: list[dict[str, object]]) -> int:
-        stmt = (
-            insert(ExchangeRateORM)
-            .values(batch)
-            .on_conflict_do_nothing(
-                index_elements=[
-                    "asset",
-                    "asset_type",
-                    "date",
-                ]
+        return (
+            self._session.scalar(
+                select(func.count()).select_from(
+                    ExchangeRateORM,
+                )
             )
+            or 0
         )
+
+    def _flush(
+        self,
+        batch: list[dict[str, object]],
+    ) -> int:
+        stmt = insert(ExchangeRateORM).values(batch)
 
         self._session.execute(stmt)
         self._session.commit()
 
         return len(batch)
 
-    def by_asset(self, asset: str) -> list[ExchangeRate]:
+    def by_asset(
+        self,
+        asset: str,
+    ) -> list[ExchangeRate]:
         rows = self._session.scalars(
             select(ExchangeRateORM)
             .where(ExchangeRateORM.asset == asset)
@@ -74,7 +80,7 @@ class SqlExchangeRateRepository:
                 func.count().label("total"),
             )
             .group_by(ExchangeRateORM.asset)
-            .order_by(desc("total"))
+            .order_by(func.count().desc())
             .limit(limit)
         ).all()
 
@@ -82,7 +88,9 @@ class SqlExchangeRateRepository:
 
     def average_rate(self) -> float:
         value = self._session.scalar(
-            select(func.avg(ExchangeRateORM.rate)).where(ExchangeRateORM.rate.is_not(None))
+            select(func.avg(ExchangeRateORM.rate)).where(
+                ExchangeRateORM.rate.is_not(None),
+            )
         )
 
         return float(value or 0.0)
