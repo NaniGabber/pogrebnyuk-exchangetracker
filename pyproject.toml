@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["ruff", "pytest", "pytest-cov", "pre-commit", "mypy", "types-requests", "types-tabulate", "pydantic", "pydantic-settings", "import-linter"]
+dev = ["ruff", "pytest", "pytest-cov", "pre-commit", "mypy", "types-requests", "types-tabulate", "pydantic", "pydantic-settings", "import-linter", "sqlalchemy", "alembic"]
 
 [project.scripts]
 exchangetracker = "exchangetracker.cli:main"
