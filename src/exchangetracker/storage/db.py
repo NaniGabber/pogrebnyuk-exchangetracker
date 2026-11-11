@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any
 from sqlalchemy import create_engine, event, Engine
+from sqlalchemy.orm import sessionmaker
 
 
 def make_engine(path: Path, echo: bool = False) -> Engine:
@@ -11,3 +12,11 @@ def make_engine(path: Path, echo: bool = False) -> Engine:
         connection.execute("PRAGMA foreign_keys=ON")
 
     return engine
+
+
+def make_session_factory(engine: Engine) -> sessionmaker:
+    return sessionmaker(
+        bind=engine,
+        autoflush=False,
+        expire_on_commit=False,
+    )
