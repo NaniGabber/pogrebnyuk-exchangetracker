@@ -1,18 +1,12 @@
-from pathlib import Path
-from typing import Any
-
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
 
 
-def make_engine(path: Path, echo: bool = False) -> Engine:
-    engine = create_engine(f"sqlite:///{path}", echo=echo, future=True)
-
-    @event.listens_for(engine, "connect")
-    def _enable_foreign_keys(connection: Any, _record: Any) -> None:
-        connection.execute("PRAGMA foreign_keys=ON")
-
-    return engine
+def make_engine(
+    database_url: str,
+    echo: bool = False,
+) -> Engine:
+    return create_engine(database_url, echo=echo, future=True)
 
 
 def make_session_factory(engine: Engine) -> sessionmaker:
