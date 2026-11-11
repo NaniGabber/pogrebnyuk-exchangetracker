@@ -56,8 +56,7 @@ jobs:
       - name: Pytest
         env:
           PYTHONPATH: src
-          # ДОДАНО: Передаємо URL бази даних для тестів
-          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/exchangetracker
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@127.0.0.1:5432/exchangetracker
         run: |
           pytest -v
 
