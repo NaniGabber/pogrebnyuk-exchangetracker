@@ -8,7 +8,7 @@ from typing import TypeVar
 from pydantic import ValidationError
 
 from ..domain.models import ExchangeRate
-from .ports import Source, ExchangeRateRepository
+from .ports import ExchangeRateRepository, Source
 from .schemas import ExchangeRateIn
 
 logger = logging.getLogger(__name__)
