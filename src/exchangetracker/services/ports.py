@@ -1,6 +1,7 @@
-from collections.abc import Iterator, Iterable
-from exchangetracker.domain.models import ExchangeRate
+from collections.abc import Iterable, Iterator
 from typing import Any, Protocol
+
+from exchangetracker.domain.models import ExchangeRate
 
 
 class Source(Protocol):

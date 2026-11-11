@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any
-from sqlalchemy import create_engine, event, Engine
+
+from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 
