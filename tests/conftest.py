@@ -1,8 +1,16 @@
 import json
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import pytest
+from sqlalchemy.orm import Session
+
+from exchangetracker.storage.db import (
+    make_engine,
+    make_session_factory,
+)
+from exchangetracker.storage.models import Base
 
 
 @pytest.fixture
@@ -56,3 +64,23 @@ class FakeSource:
 
     def read(self):
         yield from self._rows
+
+
+DATABASE_URL = "postgresql+psycopg://postgres:postgres@localhost:5432/exchangetracker"
+
+
+@pytest.fixture
+def session() -> Iterator[Session]:
+    engine = make_engine(DATABASE_URL)
+
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+
+    factory = make_session_factory(engine)
+
+    db = factory()
+
+    yield db
+
+    db.close()
+    engine.dispose()

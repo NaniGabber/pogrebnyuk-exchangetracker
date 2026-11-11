@@ -1,9 +1,19 @@
 import argparse
 import logging
 from collections.abc import Callable
+from contextlib import contextmanager
 from pathlib import Path
 
 from tabulate import tabulate
+
+from exchangetracker.storage.db import (
+    make_engine,
+    make_session_factory,
+)
+from exchangetracker.storage.models import Base
+from exchangetracker.storage.repository import (
+    SqlExchangeRateRepository,
+)
 
 from .config import Settings
 from .errors import ExchangeTrackerError, SourceError
@@ -26,6 +36,62 @@ FACTORIES: dict[str, Callable[[Path], Source]] = {
 }
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def session_scope(factory):
+    session = factory()
+
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
+
+
+def run_with_storage(
+    sources: list[Source],
+    database_url: str,
+) -> PipelineStats:
+    engine = make_engine(database_url)
+
+    Base.metadata.create_all(engine)
+
+    factory = make_session_factory(engine)
+
+    with session_scope(factory) as session:
+        repo = SqlExchangeRateRepository(session)
+
+        stats = Pipeline(sources).run_into(repo)
+
+        session.commit()
+
+        logger.info(
+            "written to database: %d",
+            stats.inserted,
+        )
+
+        for asset, total in repo.top_assets(3):
+            logger.info("%s: %d", asset, total)
+
+        logger.info(
+            "average rate: %.2f",
+            repo.average_rate(),
+        )
+
+        return stats
+
+
+def erase_database(database_url: str) -> None:
+    engine = make_engine(database_url)
+
+    Base.metadata.drop_all(engine)
+    Base.metadata.create_all(engine)
+
+    logger.info("database cleared")
 
 
 def build_source(path: Path) -> Source:
@@ -102,10 +168,39 @@ def main() -> None:
     settings = Settings()
 
     parser = argparse.ArgumentParser(prog="exchangetracker")
-    parser.add_argument("paths", type=Path, nargs="+", help="файли з даними")
-    parser.add_argument("--preview", type=int, default=10, help="Показати перші n записів")
-    parser.add_argument("--common", nargs="?", help="Порахувати кількість за валютою")
-    parser.add_argument("--stats", action="store_true", help="Вивести результати опрацювання файлу")
+
+    parser.add_argument(
+        "paths",
+        type=Path,
+        nargs="*",
+        help="файли з даними",
+    )
+
+    parser.add_argument(
+        "--preview",
+        type=int,
+        default=10,
+        help="Показати перші n записів",
+    )
+
+    parser.add_argument(
+        "--common",
+        nargs="?",
+        help="Порахувати кількість за валютою",
+    )
+
+    parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Вивести результати опрацювання файлу",
+    )
+
+    parser.add_argument(
+        "--erase",
+        action="store_true",
+        help="Очистити базу даних",
+    )
+
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -124,16 +219,28 @@ def main() -> None:
         print("Rate sum:", round(stats.rate_sum, 2))
         print("Rate min:", stats.rate_min)
         print("Rate max:", stats.rate_max)
-        print("Rate avg:", None if stats.rate_avg is None else round(stats.rate_avg, 2))
+        print(
+            "Rate avg:",
+            None if stats.rate_avg is None else round(stats.rate_avg, 2),
+        )
 
     args = parser.parse_args()
 
     setup(args.log_level or settings.log_level)
 
+    if args.erase:
+        erase_database(settings.database_url)
+        return
+
     if args.paths:
         try:
             sources = [build_source(path) for path in args.paths]
-            stats = Pipeline(sources).run()
+
+            stats = run_with_storage(
+                sources=sources,
+                database_url=settings.database_url,
+            )
+
         except ExchangeTrackerError as exc:
             logger.error("%s", exc)
             raise SystemExit(1) from exc
@@ -144,18 +251,28 @@ def main() -> None:
 
         if args.stats:
             read_stats(stats)
-    else:
-        usd_uah = get_usd_uah()
-        privat_rates = get_currency_rates_privat()
-        yahoo_rates = get_currency_rates_yahoo("USD", ["EUR", "GBP", "JPY"])
 
-        metals_usd = get_metal_prices_usd()
+        return
 
-        metals_uah = convert_usd_to_uah(metals_usd, usd_uah)
+    usd_uah = get_usd_uah()
 
-        show_privat_rates(privat_rates)
-        show_yahoo_rates(yahoo_rates, usd_uah)
-        show_metals(metals_usd, metals_uah)
+    privat_rates = get_currency_rates_privat()
+
+    yahoo_rates = get_currency_rates_yahoo(
+        "USD",
+        ["EUR", "GBP", "JPY"],
+    )
+
+    metals_usd = get_metal_prices_usd()
+
+    metals_uah = convert_usd_to_uah(
+        metals_usd,
+        usd_uah,
+    )
+
+    show_privat_rates(privat_rates)
+    show_yahoo_rates(yahoo_rates, usd_uah)
+    show_metals(metals_usd, metals_uah)
 
 
 if __name__ == "__main__":

@@ -8,7 +8,7 @@ from typing import TypeVar
 from pydantic import ValidationError
 
 from ..domain.models import ExchangeRate
-from .ports import Source
+from .ports import ExchangeRateRepository, Source
 from .schemas import ExchangeRateIn
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,7 @@ class PipelineStats:
     invalid: int = 0
     duplicates: int = 0
     kept: int = 0
+    inserted: int = 0
 
     by_asset: Counter[str] = field(default_factory=Counter)
     by_source: Counter[str] = field(default_factory=Counter)
@@ -49,6 +50,43 @@ class PipelineStats:
 class Pipeline:
     def __init__(self, sources: list[Source]) -> None:
         self._sources = sources
+
+    def run_into(
+        self,
+        repository: ExchangeRateRepository,
+    ) -> PipelineStats:
+        stats = PipelineStats()
+        seen: set[ExchangeRate] = set()
+
+        def stream() -> Iterator[ExchangeRate]:
+            for source in self._sources:
+                for rate in self._parse(source, stats):
+                    if rate in seen:
+                        stats.duplicates += 1
+                        continue
+
+                    seen.add(rate)
+
+                    stats.kept += 1
+                    stats.by_source[source.name] += 1
+                    stats.by_asset[rate.asset] += 1
+
+                    value = rate.rate
+
+                    if value is not None:
+                        stats.rate_count += 1
+                        stats.rate_sum += value
+
+                        if stats.rate_min is None or value < stats.rate_min:
+                            stats.rate_min = value
+
+                        if stats.rate_max is None or value > stats.rate_max:
+                            stats.rate_max = value
+
+                    yield rate
+
+        stats.inserted = repository.add_many(stream())
+        return stats
 
     def run(self) -> PipelineStats:
         stats = PipelineStats()

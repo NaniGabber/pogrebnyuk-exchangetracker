@@ -7,11 +7,12 @@ dependencies = [
     "requests==2.31.0",
     "yfinance==1.7.0",
     "tabulate==0.10.0",
-    "logger==1.4"
+    "logger==1.4",
+    "psycopg[binary]",
 ]
 
 [project.optional-dependencies]
-dev = ["ruff", "pytest", "pytest-cov", "pre-commit", "mypy", "types-requests", "types-tabulate", "pydantic", "pydantic-settings", "import-linter"]
+dev = ["ruff", "pytest", "pytest-cov", "pre-commit", "mypy", "types-requests", "types-tabulate", "pydantic", "pydantic-settings", "import-linter", "sqlalchemy", "alembic"]
 
 [project.scripts]
 exchangetracker = "exchangetracker.cli:main"
@@ -47,6 +48,12 @@ name = "Services do not know adapters"
 type = "forbidden"
 source_modules = ["exchangetracker.services"]
 forbidden_modules = ["exchangetracker.sources", "exchangetracker.cli"]
+
+[[tool.importlinter.contracts]]
+name = "Services do not know storage"
+type = "forbidden"
+source_modules = ["exchangetracker.services"]
+forbidden_modules = ["exchangetracker.storage"]
 
 [tool.pytest.ini_options]
 addopts = """
