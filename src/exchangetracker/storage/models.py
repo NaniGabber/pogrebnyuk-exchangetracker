@@ -39,7 +39,6 @@ class ExchangeRateORM(Base):
             "asset",
             "asset_type",
             "date",
-            "rate",
             name="uq_exchange_rate",
         ),
     )

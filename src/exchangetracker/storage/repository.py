@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 
 from sqlalchemy import func, select
-from sqlalchemy.dialects.sqlite import insert
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from ..domain.models import ExchangeRate
@@ -51,12 +51,19 @@ class SqlExchangeRateRepository:
         self,
         batch: list[dict[str, object]],
     ) -> int:
-        stmt = insert(ExchangeRateORM).values(batch)
+        stmt = (
+            insert(ExchangeRateORM)
+            .values(batch)
+            .on_conflict_do_nothing(constraint="uq_exchange_rate")
+            .returning(ExchangeRateORM.id)
+        )
 
-        self._session.execute(stmt)
+        result = self._session.execute(stmt)
+        inserted = len(result.scalars().all())
+
         self._session.commit()
 
-        return len(batch)
+        return inserted
 
     def by_asset(
         self,
