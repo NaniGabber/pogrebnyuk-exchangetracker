@@ -10,6 +10,22 @@ jobs:
   quality:
     runs-on: ubuntu-latest
 
+    # ДОДАНО: Піднімаємо PostgreSQL для тестів
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: exchangetracker
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     strategy:
       matrix:
         python-version:
@@ -40,6 +56,8 @@ jobs:
       - name: Pytest
         env:
           PYTHONPATH: src
+          # ДОДАНО: Передаємо URL бази даних для тестів
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/exchangetracker
         run: |
           pytest -v
 
