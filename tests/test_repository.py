@@ -1,3 +1,4 @@
+import os
 from collections.abc import Iterator
 
 import pytest
@@ -13,7 +14,9 @@ from exchangetracker.storage.repository import (
     SqlExchangeRateRepository,
 )
 
-TEST_DATABASE_URL = "postgresql+psycopg://postgres:postgres@localhost:5432/exchangetracker"
+TEST_DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql+psycopg://postgres:postgres@localhost:5432/exchangetracker"
+)
 
 
 @pytest.fixture

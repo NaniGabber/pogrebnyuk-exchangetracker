@@ -9,7 +9,7 @@ def test_read_rows_skips_invalid_and_empty(
     path = tmp_path / "rates.jsonl"
 
     path.write_text(
-        "\n" '{"asset":"USD","rate":40.5}\n' "invalid json\n" '{"asset":"EUR","rate":42.1}\n',
+        '\n{"asset":"USD","rate":40.5}\ninvalid json\n{"asset":"EUR","rate":42.1}\n',
         encoding="utf-8",
     )
 
